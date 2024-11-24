@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -61,5 +62,32 @@ public class ProductService {
         Optional<Product> product = productRepository.findById(id);
         byte[] image = product.orElseThrow().getImageData();
         return new ResponseEntity<>(image, HttpStatus.OK);
+    }
+
+    public ResponseEntity<String> updateProduct(int id, MultipartFile imageFile, Product product) throws IOException {
+        product.setImageData(imageFile.getBytes());
+        product.setImageName(imageFile.getName());
+        product.setImageType(imageFile.getContentType());
+        try {
+            productRepository.save(product);
+            return new ResponseEntity<>("Updated Successfully",HttpStatus.OK);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return new ResponseEntity<>("Failed to Update", HttpStatus.BAD_REQUEST);
+    }
+
+    public void deleteProduct(int id) {
+        productRepository.deleteById(id);
+    }
+
+    public ResponseEntity<List<Product>> searchProduct(String keyword) {
+        List<Product> products = productRepository.searchProduct(keyword);
+        System.out.println("Searching with: "+keyword);
+        if (!products.isEmpty()){
+            return new ResponseEntity<>(products,HttpStatus.OK);
+        }else {
+            return new ResponseEntity<>(new ArrayList<>(),HttpStatus.NO_CONTENT);
+        }
     }
 }
